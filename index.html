@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe - Moderno</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-top: 40px;
+            max-width: 500px;
+            width: 100%;
+            position: relative;
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 25px;
+            font-weight: 300;
+            font-size: 2.2em;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .game-board::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.1);
+            border-radius: 10px;
+            transition: opacity 0.3s ease;
+            z-index: 1;
+        }
+
+        .game-active::before {
+            opacity: 0;
+        }
+
+        .cell {
+            background-color: #f1f3f5;
+            border: none;
+            border-radius: 8px;
+            aspect-ratio: 1;
+            font-size: 3em;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            color: #2c3e50;
+            position: relative;
+            z-index: 2;
+        }
+
+        .cell:hover {
+            background-color: #e9ecef;
+            transform: translateY(-2px);
+        }
+
+        .cell.x {
+            color: #2196F3;
+        }
+
+        .cell.o {
+            color: #FF5252;
+        }
+
+        .status-container {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .timer {
+            font-size: 1.4em;
+            color: #495057;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 10px;
+        }
+
+        .status {
+            font-size: 1.1em;
+            color: #333;
+            min-height: 24px;
+        }
+
+        .new-game-btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            display: block;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        .new-game-btn:hover {
+            background-color: #45a049;
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .cell {
+                font-size: 2em;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tic Tac Toe</h1>
+        <div class="status-container">
+            <div class="timer" id="timer">00:00</div>
+            <div class="status" id="status">Clique em Novo Jogo para começar</div>
+        </div>
+        <div class="game-board" id="board">
+            <button class="cell" data-cell></button>
+            <button class="cell" data-cell></button>
+            <button class="cell" data-cell></button>
+            <button class="cell" data-cell></button>
+            <button class="cell" data-cell></button>
+            <button class="cell" data-cell></button>
+            <button class="cell" data-cell></button>
+            <button class="cell" data-cell></button>
+            <button class="cell" data-cell></button>
+        </div>
+        <button class="new-game-btn" id="newGameBtn">Novo Jogo</button>
+    </div>
+
+    <script>
+        const board = document.getElementById('board');
+        const cells = document.querySelectorAll('[data-cell]');
+        const status = document.getElementById('status');
+        const timer = document.getElementById('timer');
+        const newGameBtn = document.getElementById('newGameBtn');
+        
+        let currentPlayer = 'X';
+        let gameActive = false;
+        let startTime = null;
+        let timerInterval = null;
+        
+        const winCombinations = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],
+            [0, 4, 8], [2, 4, 6]
+        ];
+
+        function updateTimer() {
+            if (!startTime) return;
+            const now = Date.now();
+            const diff = now - startTime;
+            const minutes = Math.floor(diff / 60000);
+            const seconds = Math.floor((diff % 60000) / 1000);
+            timer.textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function startNewGame() {
+            // Resetar jogo
+            cells.forEach(cell => {
+                cell.textContent = '';
+                cell.classList.remove('x', 'o');
+            });
+            
+            // Ativar tabuleiro
+            board.classList.add('game-active');
+            gameActive = true;
+            currentPlayer = 'X';
+            status.textContent = `Vez do jogador ${currentPlayer}`;
+            
+            // Iniciar timer
+            startTime = Date.now();
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(updateTimer, 1000);
+            updateTimer();
+        }
+
+        function endGame() {
+            gameActive = false;
+            board.classList.remove('game-active');
+            if (timerInterval) clearInterval(timerInterval);
+        }
+
+        function handleClick(e) {
+            if (!gameActive) return;
+            
+            const cell = e.target;
+            if (cell.textContent !== '') return;
+
+            cell.textContent = currentPlayer;
+            cell.classList.add(currentPlayer.toLowerCase());
+
+            if (checkWin()) {
+                status.textContent = `Jogador ${currentPlayer} venceu!`;
+                endGame();
+                return;
+            }
+
+            if (checkDraw()) {
+                status.textContent = 'Empate!';
+                endGame();
+                return;
+            }
+
+            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+            status.textContent = `Vez do jogador ${currentPlayer}`;
+        }
+
+        function checkWin() {
+            return winCombinations.some(combination => {
+                return combination.every(index => {
+                    return cells[index].textContent === currentPlayer;
+                });
+            });
+        }
+
+        function checkDraw() {
+            return [...cells].every(cell => {
+                return cell.textContent !== '';
+            });
+        }
+
+        // Event Listeners
+        cells.forEach(cell => cell.addEventListener('click', handleClick));
+        newGameBtn.addEventListener('click', startNewGame);
+
+        // Estado inicial
+        endGame();
+    </script>
+</body>
+</html>
