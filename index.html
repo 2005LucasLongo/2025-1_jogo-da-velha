@@ -2,131 +2,269 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tic Tac Toe - Moderno</title>
-    <link rel="stylesheet" href="./styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Jogo da Velha Inteligente</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2C3E50;    /* Cor profissional/séria */
+            --secondary-color: #3498DB;  /* Cor de confiança */
+            --success-color: #27AE60;     /* Cor positiva */
+            --danger-color: #E74C3C;      /* Cor de alerta */
+            --light-color: #ECF0F1;       /* Cor de fundo suave */
+            --dark-color: #2C3E50;        /* Cor de texto */
+        }
+
+        body {
+            background-color: var(--light-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .game-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 3rem;
+            background: white;
+            border: 3px solid var(--primary-color);
+            color: var(--dark-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cell:hover {
+            background-color: #f8f9fa;
+            transform: scale(1.05);
+        }
+
+        .cell.x-mark {
+            color: var(--danger-color); /* Vermelho para energia e urgência */
+        }
+
+        .cell.o-mark {
+            color: var(--secondary-color); /* Azul para confiança e estabilidade */
+        }
+
+        #status {
+            font-size: 1.2rem;
+            background-color: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+
+        .btn-custom {
+            font-weight: 600;
+            transition: all 0.3s ease;
+            padding: 12px 25px;
+        }
+
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        @media (max-width: 576px) {
+            .cell {
+                font-size: 2.5rem;
+            }
+            
+            .game-container {
+                padding: 10px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Jogo da Velha</h1>
-        <div class="status-container">
-            <div class="timer" id="timer">00:00</div>
-            <div class="status" id="status">Clique em Novo Jogo para começar</div>
+    <div class="game-container">
+        <div class="text-center mb-4">
+            <h1 class="display-5 fw-bold text-primary-color" style="color: var(--primary-color);">Jogo da Velha</h1>
+            <p class="lead" style="color: var(--dark-color);">Escolha seu símbolo</p>
         </div>
-        <div class="game-board" id="board">
-            <button class="cell" data-cell></button>
-            <button class="cell" data-cell></button>
-            <button class="cell" data-cell></button>
-            <button class="cell" data-cell></button>
-            <button class="cell" data-cell></button>
-            <button class="cell" data-cell></button>
-            <button class="cell" data-cell></button>
-            <button class="cell" data-cell></button>
-            <button class="cell" data-cell></button>
+
+        <div class="d-flex justify-content-center gap-3 mb-4">
+            <button class="btn btn-custom btn-danger x-mark" onclick="startGame('X')">Jogar como X</button>
+            <button class="btn btn-custom btn-primary o-mark" onclick="startGame('O')">Jogar como O</button>
         </div>
-        <button class="new-game-btn" id="newGameBtn">Novo Jogo</button>
-        <button class="singleplayer-btn" id="singleplayerBtn"><a target="_blank" href="./singleplayer.html" id="singleplayerBtnText">Singleplayer</a></button>
+
+        <div id="status" class="text-center fw-bold"></div>
+
+        <div class="container">
+            <div class="row g-0">
+                <div class="col-4 cell border-top border-start" data-row="0" data-col="0"></div>
+                <div class="col-4 cell border-top" data-row="0" data-col="1"></div>
+                <div class="col-4 cell border-top border-end" data-row="0" data-col="2"></div>
+                
+                <div class="col-4 cell border-start" data-row="1" data-col="0"></div>
+                <div class="col-4 cell" data-row="1" data-col="1"></div>
+                <div class="col-4 cell border-end" data-row="1" data-col="2"></div>
+                
+                <div class="col-4 cell border-bottom border-start" data-row="2" data-col="0"></div>
+                <div class="col-4 cell border-bottom" data-row="2" data-col="1"></div>
+                <div class="col-4 cell border-bottom border-end" data-row="2" data-col="2"></div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-center mt-4">
+            <button class="btn btn-custom btn-success" onclick="resetGame()">Novo Jogo</button>
+        </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const board = document.getElementById('board');
-        const cells = document.querySelectorAll('[data-cell]');
-        const status = document.getElementById('status');
-        const timer = document.getElementById('timer');
-        const newGameBtn = document.getElementById('newGameBtn');
-        
         let currentPlayer = 'X';
+        let playerSymbol = '';
+        let botSymbol = '';
         let gameActive = false;
-        let startTime = null;
-        let timerInterval = null;
-        
-        const winCombinations = [
-            [0, 1, 2], [3, 4, 5], [6, 7, 8],
-            [0, 3, 6], [1, 4, 7], [2, 5, 8],
-            [0, 4, 8], [2, 4, 6]
-        ];
+        let boardState = [[null, null, null], [null, null, null], [null, null, null]];
 
-        function updateTimer() {
-            if (!startTime) return;
-            const now = Date.now();
-            const diff = now - startTime;
-            const minutes = Math.floor(diff / 60000);
-            const seconds = Math.floor((diff % 60000) / 1000);
-            timer.textContent = 
-                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        }
-
-        function startNewGame() {
-            // Resetar jogo
-            cells.forEach(cell => {
-                cell.textContent = '';
-                cell.classList.remove('x', 'o');
-            });
-            
-            // Ativar tabuleiro
-            board.classList.add('game-active');
+        function startGame(symbol) {
+            playerSymbol = symbol;
+            botSymbol = symbol === 'X' ? 'O' : 'X';
             gameActive = true;
-            currentPlayer = 'X';
-            status.textContent = `Vez do jogador ${currentPlayer}`;
+            resetGame();
+            document.getElementById('status').textContent = `Jogando como ${playerSymbol} - Sua vez!`;
+            document.getElementById('status').style.color = symbol === 'X' ? 'var(--danger-color)' : 'var(--secondary-color)';
             
-            // Iniciar timer
-            startTime = Date.now();
-            if (timerInterval) clearInterval(timerInterval);
-            timerInterval = setInterval(updateTimer, 1000);
-            updateTimer();
+            if (botSymbol === 'X') {
+                makeBotMove();
+            }
         }
 
-        function endGame() {
+        function handleCellClick(row, col) {
+            if (!gameActive || currentPlayer !== playerSymbol || boardState[row][col] !== null) return;
+
+            makeMove(row, col, playerSymbol);
+            
+            if (checkWin(playerSymbol)) {
+                endGame('player');
+                return;
+            }
+            
+            if (checkTie()) {
+                endGame('tie');
+                return;
+            }
+
+            currentPlayer = botSymbol;
+            setTimeout(makeBotMove, 500);
+        }
+
+        function makeBotMove() {
+            let move = findWinningMove(botSymbol) || 
+                      findWinningMove(playerSymbol) || 
+                      findRandomMove();
+            
+            makeMove(move.row, move.col, botSymbol);
+            
+            if (checkWin(botSymbol)) {
+                endGame('bot');
+                return;
+            }
+            
+            if (checkTie()) {
+                endGame('tie');
+                return;
+            }
+
+            currentPlayer = playerSymbol;
+        }
+
+        function findWinningMove(symbol) {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (boardState[i][j] === null) {
+                        boardState[i][j] = symbol;
+                        if (checkWin(symbol)) {
+                            boardState[i][j] = null;
+                            return {row: i, col: j};
+                        }
+                        boardState[i][j] = null;
+                    }
+                }
+            }
+            return null;
+        }
+
+        function findRandomMove() {
+            const emptyCells = [];
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (boardState[i][j] === null) {
+                        emptyCells.push({row: i, col: j});
+                    }
+                }
+            }
+            return emptyCells[Math.floor(Math.random() * emptyCells.length)];
+        }
+
+        function makeMove(row, col, symbol) {
+            boardState[row][col] = symbol;
+            const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+            cell.textContent = symbol;
+            cell.classList.add(symbol === 'X' ? 'x-mark' : 'o-mark');
+        }
+
+        function checkWin(symbol) {
+            for (let i = 0; i < 3; i++) {
+                if (boardState[i][0] === symbol && boardState[i][1] === symbol && boardState[i][2] === symbol) return true;
+            }
+            for (let j = 0; j < 3; j++) {
+                if (boardState[0][j] === symbol && boardState[1][j] === symbol && boardState[2][j] === symbol) return true;
+            }
+            if (boardState[0][0] === symbol && boardState[1][1] === symbol && boardState[2][2] === symbol) return true;
+            if (boardState[0][2] === symbol && boardState[1][1] === symbol && boardState[2][0] === symbol) return true;
+            return false;
+        }
+
+        function checkTie() {
+            return boardState.flat().every(cell => cell !== null);
+        }
+
+        function endGame(result) {
             gameActive = false;
-            board.classList.remove('game-active');
-            if (timerInterval) clearInterval(timerInterval);
+            const messages = {
+                player: `Vitória! (${playerSymbol})`,
+                bot: 'Derrota! Tente novamente!',
+                tie: 'Empate!'
+            };
+            const status = document.getElementById('status');
+            status.textContent = messages[result];
+            status.style.color = result === 'player' ? 'var(--success-color)' : 
+                                result === 'bot' ? 'var(--danger-color)' : 'var(--dark-color)';
+            setTimeout(resetGame, 1500);
         }
 
-        function handleClick(e) {
-            if (!gameActive) return;
-            
-            const cell = e.target;
-            if (cell.textContent !== '') return;
-
-            cell.textContent = currentPlayer;
-            cell.classList.add(currentPlayer.toLowerCase());
-
-            if (checkWin()) {
-                status.textContent = `Jogador ${currentPlayer} venceu!`;
-                endGame();
-                return;
-            }
-
-            if (checkDraw()) {
-                status.textContent = 'Empate!';
-                endGame();
-                return;
-            }
-
-            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-            status.textContent = `Vez do jogador ${currentPlayer}`;
-        }
-
-        function checkWin() {
-            return winCombinations.some(combination => {
-                return combination.every(index => {
-                    return cells[index].textContent === currentPlayer;
-                });
+        function resetGame() {
+            boardState = [[null, null, null], [null, null, null], [null, null, null]];
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.textContent = '';
+                cell.classList.remove('x-mark', 'o-mark');
             });
+            if (gameActive) {
+                document.getElementById('status').textContent = `Jogando como ${playerSymbol} - Sua vez!`;
+                document.getElementById('status').style.color = playerSymbol === 'X' ? 'var(--danger-color)' : 'var(--secondary-color)';
+            }
         }
 
-        function checkDraw() {
-            return [...cells].every(cell => {
-                return cell.textContent !== '';
+        document.querySelectorAll('.cell').forEach(cell => {
+            cell.addEventListener('click', () => {
+                const row = parseInt(cell.dataset.row);
+                const col = parseInt(cell.dataset.col);
+                handleCellClick(row, col);
             });
-        }
-
-        // Event Listeners
-        cells.forEach(cell => cell.addEventListener('click', handleClick));
-        newGameBtn.addEventListener('click', startNewGame);
-
-        // Estado inicial
-        endGame();
+        });
     </script>
 </body>
 </html>
